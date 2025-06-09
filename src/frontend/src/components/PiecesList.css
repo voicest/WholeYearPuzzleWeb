@@ -1,0 +1,13 @@
+.pieces-list {
+  background-color: #fff;
+  padding: 10px;
+  border: 1px solid #ccc;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.piece-item {
+  margin-bottom: 15px;
+}
+.piece-shape {
+  margin-top: 5px;
+}

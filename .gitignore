@@ -1,0 +1,12 @@
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore Gradle build output directory
+build
+
+src/frontend/node_modules/*
+# Ignore Node.js dependencies directory
+
+buildSrc/*
+utilities/*
+
