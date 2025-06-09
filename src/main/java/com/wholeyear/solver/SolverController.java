@@ -18,6 +18,10 @@ import java.util.*;
 public class SolverController {
     private final List<Piece> pieces;
     private final Board board;
+    //Create a map of peice id to index
+    private final Map<String, Integer> pieceIdToIndexMap = new HashMap<>();
+    
+
 
     public SolverController() {
         this.pieces = Defintion.loadAllPieces();
@@ -34,11 +38,13 @@ public class SolverController {
         Solver solver = new com.wholeyear.util.Solver(board, pieces);
         List<Placement> placements = solver.solve();
         List<PlacementDto> placementDtos = new ArrayList<>();
-        int i = 1;
+        
         for (Placement placement : placements) {
-            PlacementDto dto = new PlacementDto(i, placement.getCoveredCells());
+            //Get the index of the piece in the placement
+            int pieceIndex = pieceIdToIndexMap.get(placement.getPieceId());
+            PlacementDto dto = new PlacementDto(pieceIndex, placement.getCoveredCells());
             placementDtos.add(dto);     
-            i++;
+        
         }
         return placementDtos;
 
@@ -50,6 +56,9 @@ public class SolverController {
         int i = 0;
         for (Piece piece : pieces) {
             PieceDto dto = new PieceDto(i, piece.getId(), piece.getCanonicalCells());
+            //Store the piece id to index mapping
+            pieceIdToIndexMap.put(piece.getId(), i);
+            System.out.println("Piece ID: " + piece.getId() + ", Index: " + i);
             pieceDtos.add(dto);
             i++;
         }
