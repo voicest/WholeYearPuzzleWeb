@@ -6,7 +6,9 @@ import com.wholeyear.model.Board;
 import com.wholeyear.util.Solver;
 import com.wholeyear.util.Placement;
 import com.wholeyear.model.BoardCell;
+import com.wholeyear.model.Cell;
 import com.wholeyear.model.PieceDto;
+import com.wholeyear.model.Board.CellState;
 import com.wholeyear.util.PlacementDto;
 
 import org.springframework.web.bind.annotation.*;
@@ -20,14 +22,23 @@ public class SolverController {
     private final Board board;
     //Create a map of peice id to index
     private final Map<String, Integer> pieceIdToIndexMap = new HashMap<>();
-    
+    private final List<Cell> targetCells = new ArrayList<>();
 
 
     public SolverController() {
         this.pieces = Defintion.loadAllPieces();
         this.board = Defintion.createWholeYearPuzzleBoard();
-        this.board.setTarget(0, 1);
-        this.board.setTarget(4, 1);
+
+        //Set the target cells for the board
+        Cell targetCell1 = new Cell(0, 1);
+        Cell targetCell2 = new Cell(4, 1);  
+        targetCells.add(targetCell1);
+        targetCells.add(targetCell2);
+
+        for (Cell cell : targetCells) {
+            //Set the target cells on the board
+            this.board.setTarget(cell.getRow(), cell.getCol());
+        }
         
     }
 
@@ -71,8 +82,9 @@ public class SolverController {
         List<BoardCell> boardCells = new ArrayList<>();
         for (int r = 0; r < board.getRows(); r++) {
             for (int c = 0; c < board.getCols(); c++) {
-                String label = board.getLabel(r, c);    
-                BoardCell cell = new BoardCell(r, c, label);
+                String label = board.getLabel(r, c);  
+                CellState state = board.getCellState(r, c); 
+                BoardCell cell = new BoardCell(r, c, label, state);
                 boardCells.add(cell);
             }
         }

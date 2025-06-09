@@ -1,3 +1,70 @@
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+  background: #f6f8fa;
+  margin: 0;
+  padding: 0;
+}
+
+.app-root {
+  min-height: 100vh;
+  background: #f6f8fa;
+}
+
+.app-header {
+  background: #2d3a4b;
+  color: #fff;
+  padding: 24px 0 16px 0;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 1px;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 32px;
+}
+
+.workspace-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(44, 62, 80, 0.10);
+  padding: 32px 40px;
+  display: flex;
+  gap: 48px;
+  margin-bottom: 32px;
+  min-width: 600px;
+}
+
+.solve-button {
+  background: #2d3a4b;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 14px 36px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.solve-button:disabled {
+  background: #b0b8c1;
+  cursor: not-allowed;
+}
+
+.solve-button:not(:disabled):hover {
+  background: #1a2230;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.16);
+}
+
 .app-container {
   text-align: center;
 }
@@ -5,9 +72,4 @@
   display: flex;
   justify-content: space-around;
   margin: 20px 0;
-}
-.solve-button {
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
 }

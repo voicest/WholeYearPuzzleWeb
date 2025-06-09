@@ -6,20 +6,19 @@ import './PiecesList.css';
  */
 const PiecesList = ({ pieces }) => {
   if (!pieces || !pieces.length) return <div className="pieces-list">Loading pieces...</div>;
-
   return (
-    <div className="pieces-list">
-      <h2>Available Pieces</h2>
-      <ul>
-        {pieces.map(piece => (
-          <li key={piece.id} className="piece-item">
-            <strong>{piece.name}</strong>
-            <div className="piece-shape">
-              {renderShape(piece.shape,piece.id)}
-            </div>
-          </li>
+    <div className="pieces-list-container">
+      <h2 className="pieces-list-title">Available Pieces</h2>
+      <div className="pieces-grid">
+        {pieces.map((piece, idx) => (
+          <div className="piece-card" key={idx}>
+            
+            {renderShape(piece.shape,piece.id)}
+            
+
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 };

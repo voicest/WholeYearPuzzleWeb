@@ -49,15 +49,19 @@ function App() {
   };
 
   return (
-    <div className="app-container">
-      <h1>Whole Year Puzzle Solver</h1>
-      <div className="workspace">
-        <Board boardData={boardData} solution={solution} />
-        <PiecesList pieces={pieces} />
-      </div>
-      <button onClick={handleSolve} disabled={loading} className="solve-button">
-        {loading ? 'Solving...' : 'Solve Puzzle'}
-      </button>
+    <div className="app-root">
+      <header className="app-header">
+        <h1>Whole Year Puzzle Solver</h1>
+      </header>
+      <main className="app-main">
+        <div className="workspace-card">
+          <Board boardData={boardData} solution={solution} />
+          <PiecesList pieces={pieces} />
+        </div>
+        <button onClick={handleSolve} disabled={loading} className="solve-button">
+          {loading ? 'Solving...' : 'Solve Puzzle'}
+        </button>
+      </main>
     </div>
   );
 }

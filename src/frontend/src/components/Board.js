@@ -4,8 +4,9 @@ import './Board.css';
 /**
  * boardData: array of objects { row: number, col: number, label: string }
  * solution: array of placements { pieceId, cells: [{row, col}] }
+ * targetCells: array of { row, col }
  */
-const Board = ({ boardData, solution }) => {
+const Board = ({ boardData, solution, targetCells = [] }) => {
   if (!boardData.length) return <div className="board">Loading board...</div>;
 
   // Determine dimensions
@@ -23,9 +24,11 @@ const Board = ({ boardData, solution }) => {
   solution.forEach(({ pieceId, cells }) => {
     cells.forEach(({ row, col }) => {
       assignment[`${row}-${col}`] = pieceId;
-      console.log(`Assigning piece ${pieceId} to cell ${row}-${col}`);
     });
   });
+
+  // Create a set for fast target lookup
+  const targetSet = new Set(targetCells.map(tc => `${tc.row}-${tc.col}`));
 
   return (
     <div
@@ -43,17 +46,40 @@ const Board = ({ boardData, solution }) => {
           const cell = cellMap[key];
           const pieceId = assignment[key];
           const isFilled = pieceId !== undefined && pieceId !== null;
-
+          
+          
           // If no cell exists in this grid position, render an empty-space placeholder
-          if (!cell) {
-            return <div key={key} className="empty-cell" />;
+          if (!cell || !cell.label) {
+            return (
+              <div
+                key={key}
+                className="empty-cell"
+                style={{
+                  backgroundColor: '#e0e0e0',
+                  border: '1px solid #bbb',
+                  width: '40px',
+                  height: '40px',
+                }}
+              />
+            );
           }
+
+          //console.log(`Rendering cell at ${key}:`, cell);
+
+          // Is this cell a target?
+          //const isTarget = true if cell.state === 'TARGET' //|| targetSet.has(key);
+            const isTarget = cell.state === 'TARGET' || targetSet.has(key);
+            if (isTarget) {
+            console.log(`Cell ${key} is a target with state: ${cell.state}`);
+            }
+        
+          //const isTarget = targetSet.has(key) || cell.state === 'TARGET';
+          //const isTarget = true
 
           // Determine border sides
           let borderTop, borderRight, borderBottom, borderLeft;
 
           if (isFilled) {
-            // For filled cells, only draw borders where neighbor is different or missing
             const upKey = `${r - 1}-${c}`;
             const downKey = `${r + 1}-${c}`;
             const leftKey = `${r}-${c - 1}`;
@@ -69,7 +95,6 @@ const Board = ({ boardData, solution }) => {
             borderLeft = leftSame ? 'none' : '2px solid black';
             borderRight = rightSame ? 'none' : '2px solid black';
           } else {
-            // For unfilled cells that exist on the board, use a light gray border
             borderTop = borderBottom = borderLeft = borderRight = '1px solid #999';
           }
 
@@ -78,16 +103,30 @@ const Board = ({ boardData, solution }) => {
               key={key}
               className="cell"
               style={{
-                backgroundColor: isFilled
+                backgroundColor: isTarget
+                  ? '#ff3b3b'
+                  : isFilled
                   ? `hsl(${(pieceId * 40) % 360}, 70%, 80%)`
                   : '#fff',
                 borderTop,
                 borderRight,
                 borderBottom,
                 borderLeft,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
             >
-              <span className="cell-label">{cell.label}</span>
+              <span
+                className="cell-label"
+                style={
+                  isTarget
+                    ? { color: '#111', fontWeight: 'bold', fontSize: '1.1em' }
+                    : {}
+                }
+              >
+                {cell.label}
+              </span>
             </div>
           );
         })
@@ -95,6 +134,5 @@ const Board = ({ boardData, solution }) => {
     </div>
   );
 };
-
 
 export default Board;
