@@ -4,18 +4,20 @@ import './PiecesList.css';
 /**
  * pieces: array of objects { id: number, name: string, shape: array of {row, col} }
  */
-const PiecesList = ({ pieces }) => {
+const PiecesList = ({ pieces, onDragStart }) => {
   if (!pieces || !pieces.length) return <div className="pieces-list">Loading pieces...</div>;
   return (
     <div className="pieces-list-container">
       <h2 className="pieces-list-title">Available Pieces</h2>
       <div className="pieces-grid">
-        {pieces.map((piece, idx) => (
-          <div className="piece-card" key={idx}>
-            
-            {renderShape(piece.shape,piece.id)}
-            
-
+        {pieces.map((piece) => (
+          <div
+            className="piece-card"
+            key={piece.id}
+            draggable
+            onDragStart={() => onDragStart(piece)}
+          >
+            {renderShape(piece.shape, piece.id)}
           </div>
         ))}
       </div>
@@ -29,7 +31,7 @@ function renderShape(shape, id) {
     return <div className="empty-shape">No shape defined</div>;
   }
 
-  // Assume shape is array of {row, col}. Normalize to grid
+  // Normalize the shape to fit within a grid
   const rows = Math.max(...shape.map(c => c.row)) - Math.min(...shape.map(c => c.row)) + 1;
   const cols = Math.max(...shape.map(c => c.col)) - Math.min(...shape.map(c => c.col)) + 1;
   const minRow = Math.min(...shape.map(c => c.row));
@@ -45,7 +47,7 @@ function renderShape(shape, id) {
         display: 'grid',
         gridTemplateRows: `repeat(${rows}, 20px)`,
         gridTemplateColumns: `repeat(${cols}, 20px)`,
-        gap: '1px',
+        gap: '2px', // Add spacing between cells for better visibility
       }}
     >
       {grid.flat().map((filled, idx) => (
@@ -54,9 +56,8 @@ function renderShape(shape, id) {
           style={{
             width: '20px',
             height: '20px',
-            backgroundColor: filled ? `hsl(${(id * 40) % 360}, 70%, 80%)`
-            : 'transparent',
-            border: filled ? '1px solid #333' : '1px dashed #ccc',
+            backgroundColor: filled ? `hsl(${(id * 40) % 360}, 70%, 80%)` : 'transparent',
+            border: filled ? '1px solid #333' : 'none', // Remove dashed borders for empty cells
           }}
         />
       ))}

@@ -46,6 +46,8 @@ function App() {
 
   // Handle date change
   const handleDateChange = async (event) => {
+    //reset the solution when the date changes
+    setSolution([]);
     const selectedDate = event.target.value;
     setTargetDate(selectedDate);
 

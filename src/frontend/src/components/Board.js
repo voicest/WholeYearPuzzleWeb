@@ -106,7 +106,7 @@ const Board = ({ boardData, solution, targetCells = [] }) => {
                 backgroundColor: isTarget
                   ? '#ff3b3b'
                   : isFilled
-                  ? `hsl(${(pieceId * 40) % 360}, 70%, 80%)`
+                  ? `hsl(${(pieceId * 40) % 360}, 70%, 50%)`
                   : '#fff',
                 borderTop,
                 borderRight,
