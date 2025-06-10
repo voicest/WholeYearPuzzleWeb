@@ -1,7 +1,9 @@
 .board {
   background-color: #ddd;
-  padding: 10px;
+  display: flex;
+  padding: 20px;
   display: inline-block;
+
 }
 .cell {
   display: flex;
@@ -9,14 +11,16 @@
   justify-content: center;
   border: 1px solid #999;
   position: relative;
+  width: 60px; /* Increased width */
+  height: 60px; /* Increased height */
 }
 .empty-cell {
   background: #e0e0e0;
   border: 1px solid #bbb;
-  width: 40px;
-  height: 40px;
+  width: 60px; /* Increased width */
+  height: 60px; /* Increased height */
 }
 .cell-label {
-  font-size: 12px;
+  font-size: 14px; /* Adjusted font size for larger cells */
   color: #333;
 }

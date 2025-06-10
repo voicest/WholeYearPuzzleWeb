@@ -35,8 +35,8 @@ const Board = ({ boardData, solution, targetCells = [] }) => {
       className="board"
       style={{
         display: 'grid',
-        gridTemplateRows: `repeat(${rows}, 40px)`,
-        gridTemplateColumns: `repeat(${cols}, 40px)`,
+        gridTemplateRows: `repeat(${rows}, 60px)`,
+        gridTemplateColumns: `repeat(${cols}, 60px)`,
         gap: '0px',
       }}
     >
@@ -57,8 +57,8 @@ const Board = ({ boardData, solution, targetCells = [] }) => {
                 style={{
                   backgroundColor: '#e0e0e0',
                   border: '1px solid #bbb',
-                  width: '40px',
-                  height: '40px',
+                  width: '60px',
+                  height: '60px',
                 }}
               />
             );
@@ -70,7 +70,7 @@ const Board = ({ boardData, solution, targetCells = [] }) => {
           //const isTarget = true if cell.state === 'TARGET' //|| targetSet.has(key);
             const isTarget = cell.state === 'TARGET' || targetSet.has(key);
             if (isTarget) {
-            console.log(`Cell ${key} is a target with state: ${cell.state}`);
+            //console.log(`Cell ${key} is a target with state: ${cell.state}`);
             }
         
           //const isTarget = targetSet.has(key) || cell.state === 'TARGET';

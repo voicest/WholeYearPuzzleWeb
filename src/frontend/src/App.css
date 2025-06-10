@@ -32,14 +32,16 @@ body {
 }
 
 .workspace-card {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(44, 62, 80, 0.10);
-  padding: 32px 40px;
-  display: flex;
-  gap: 48px;
+  padding: 32px;
   margin-bottom: 32px;
-  min-width: 600px;
+  width: 80%; /* Reduce the width of the workspace card */
+  max-width: 1200px; /* Optional: Set a maximum width */
 }
 
 .solve-button {
@@ -72,4 +74,39 @@ body {
   display: flex;
   justify-content: space-around;
   margin: 20px 0;
+}
+
+.workspace-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.workspace-column:first-child {
+  flex: 3; /* Make the board column occupy 60% of the total width */
+}
+
+.workspace-column:last-child {
+  flex: 2; /* Make the date picker and pieces column occupy 40% of the total width */
+}
+
+.date-picker-container {
+  display: flex;
+  flex-direction: row; /* Change to row layout */
+  align-items: center; /* Align label and date picker vertically */
+  gap: 8px; /* Add spacing between label and date picker */
+}
+
+.date-picker-container label {
+  font-weight: 600;
+  font-size: 1.2rem;
+  color: #2d3a4b;
+}
+
+.date-picker {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }

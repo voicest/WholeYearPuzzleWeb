@@ -225,6 +225,21 @@ public class Board {
         return null;
     }
 
+    public void reset() {
+
+        // resent target cells to fillable
+        // Reset all cells to fillable, except those that were blocked 
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                if (grid[r][c] == CellState.BLOCKED  || grid[r][c] == CellState.OFF_BOARD) {
+                    continue; // Keep blocked and target cells as is
+                } else {
+                    grid[r][c] = CellState.FILLABLE; // Reset to fillable
+                }
+            }
+        }
+    }
+
     // Getters for dimensions if needed:
     public int getRows() { return rows; }
     public int getCols() { return cols; }

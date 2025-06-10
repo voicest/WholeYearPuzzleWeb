@@ -8,20 +8,17 @@ function App() {
   const [pieces, setPieces] = useState([]);
   const [solution, setSolution] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
 
   // Fetch board and pieces definitions on mount
   useEffect(() => {
     async function fetchData() {
       try {
-        console.log('Fetching board and pieces data...');
         const boardRes = await fetch('/api/board');
-        console.log('Board response:', boardRes);
         if (!boardRes.ok) {
           throw new Error(`HTTP error! status: ${boardRes.status}`);
         }
-        console.log('Board data fetched successfully');
         const boardJson = await boardRes.json();
-        console.log('Board JSON:', boardJson);
         setBoardData(boardJson);
 
         const piecesRes = await fetch('/api/pieces');
@@ -40,12 +37,33 @@ function App() {
     try {
       const res = await fetch('/api/solve', { method: 'POST' });
       const solJson = await res.json();
-      console.log('Solution JSON:', solJson);
       setSolution(solJson);
     } catch (err) {
       console.error('Error solving puzzle:', err);
     }
     setLoading(false);
+  };
+
+  // Handle date change
+  const handleDateChange = async (event) => {
+    const selectedDate = event.target.value;
+    setTargetDate(selectedDate);
+
+    try {
+      await fetch('/api/updateTargetDate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `date=${selectedDate}`,
+      });
+      // Refetch board data after updating the target date
+      const boardRes = await fetch('/api/board');
+      const boardJson = await boardRes.json();
+      setBoardData(boardJson);
+    } catch (err) {
+      console.error('Error updating target date:', err);
+    }
   };
 
   return (
@@ -55,8 +73,22 @@ function App() {
       </header>
       <main className="app-main">
         <div className="workspace-card">
-          <Board boardData={boardData} solution={solution} />
-          <PiecesList pieces={pieces} />
+          <div className="workspace-column">
+            <Board boardData={boardData} solution={solution} />
+          </div>
+          <div className="workspace-column">
+            <div className="date-picker-container">
+              <label htmlFor="target-date-picker">Select Solve Date:</label>
+              <input
+                type="date"
+                id="target-date-picker"
+                value={targetDate}
+                onChange={handleDateChange}
+                className="date-picker"
+              />
+            </div>
+            <PiecesList pieces={pieces} />
+          </div>
         </div>
         <button onClick={handleSolve} disabled={loading} className="solve-button">
           {loading ? 'Solving...' : 'Solve Puzzle'}
