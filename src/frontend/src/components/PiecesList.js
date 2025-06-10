@@ -1,10 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import './PiecesList.css';
 
 /**
  * pieces: array of objects { id: number, name: string, shape: array of {row, col} }
  */
-const PiecesList = ({ pieces, onDragStart }) => {
+const PiecesList = ({ pieces }) => {
+  const [selectedPiece, setSelectedPiece] = useState(null); // Track the currently selected piece
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.code === 'Space' && selectedPiece) {
+        event.preventDefault(); // Prevent default space bar behavior
+        console.log('Rotating piece:', selectedPiece.id); // Debug: Log the selected piece ID
+
+        // Rotate the shape 90 degrees clockwise
+        const rotatedShape = selectedPiece.shape.map(({ row, col }) => ({
+          row: col,
+          col: -row, 
+        }));
+
+        console.log('Rotated shape:', rotatedShape); // Debug: Log the rotated shape
+        setSelectedPiece({ ...selectedPiece, shape: rotatedShape }); // Update the selected piece's shape
+      }
+    };
+
+    // Attach the keydown listener to the document
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedPiece]);
+
+  const handleSelectPiece = (piece) => {
+    console.log('Selected piece:', piece); // Debug: Log the selected piece
+    setSelectedPiece(piece); // Set the selected piece
+  };
+
   if (!pieces || !pieces.length) return <div className="pieces-list">Loading pieces...</div>;
   return (
     <div className="pieces-list-container">
@@ -12,12 +43,13 @@ const PiecesList = ({ pieces, onDragStart }) => {
       <div className="pieces-grid">
         {pieces.map((piece) => (
           <div
-            className="piece-card"
+            className={`piece-card ${selectedPiece?.id === piece.id ? 'selected-piece' : ''}`}
             key={piece.id}
-            draggable
-            onDragStart={() => onDragStart(piece)}
+            onClick={() => handleSelectPiece(piece)} // Select the piece on click
           >
-            {renderShape(piece.shape, piece.id)}
+            {selectedPiece?.id === piece.id
+              ? renderShape(selectedPiece.shape, selectedPiece.id) // Render updated shape for selected piece
+              : renderShape(piece.shape, piece.id)}
           </div>
         ))}
       </div>
@@ -26,19 +58,27 @@ const PiecesList = ({ pieces, onDragStart }) => {
 };
 
 function renderShape(shape, id) {
-  // If shape is undefined or empty, show placeholder
-  if (!shape || !shape.length) {
-    return <div className="empty-shape">No shape defined</div>;
+  if (!shape || shape.length === 0) {
+    console.error('Invalid shape:', shape); // Debug: Log invalid shape
+    return <div>No shape available</div>;
   }
 
-  // Normalize the shape to fit within a grid
-  const rows = Math.max(...shape.map(c => c.row)) - Math.min(...shape.map(c => c.row)) + 1;
-  const cols = Math.max(...shape.map(c => c.col)) - Math.min(...shape.map(c => c.col)) + 1;
-  const minRow = Math.min(...shape.map(c => c.row));
-  const minCol = Math.min(...shape.map(c => c.col));
-  const grid = Array.from({ length: rows }).map(() => Array(cols).fill(false));
+  const rows = Math.max(...shape.map((c) => c.row)) + 1;
+  const cols = Math.max(...shape.map((c) => c.col)) + 1;
+
+  // Ensure rows and cols are valid
+  if (rows <= 0 || cols <= 0) {
+    console.error('Invalid grid dimensions:', { rows, cols }); // Debug: Log invalid dimensions
+    return <div>Invalid grid dimensions</div>;
+  }
+
+  const grid = Array.from({ length: rows }, () => Array(cols).fill(false));
   shape.forEach(({ row, col }) => {
-    grid[row - minRow][col - minCol] = true;
+    if (grid[row] && grid[row][col] !== undefined) {
+      grid[row][col] = true;
+    } else {
+      console.error('Invalid cell coordinates:', { row, col }); // Debug: Log invalid cell coordinates
+    }
   });
 
   return (
@@ -47,7 +87,7 @@ function renderShape(shape, id) {
         display: 'grid',
         gridTemplateRows: `repeat(${rows}, 20px)`,
         gridTemplateColumns: `repeat(${cols}, 20px)`,
-        gap: '2px', // Add spacing between cells for better visibility
+        gap: '2px',
       }}
     >
       {grid.flat().map((filled, idx) => (
@@ -57,7 +97,7 @@ function renderShape(shape, id) {
             width: '20px',
             height: '20px',
             backgroundColor: filled ? `hsl(${(id * 40) % 360}, 70%, 80%)` : 'transparent',
-            border: filled ? '1px solid #333' : 'none', // Remove dashed borders for empty cells
+            border: filled ? '1px solid #333' : 'none',
           }}
         />
       ))}

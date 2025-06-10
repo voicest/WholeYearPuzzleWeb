@@ -6,6 +6,7 @@ import './App.css';
 function App() {
   const [boardData, setBoardData] = useState([]);
   const [pieces, setPieces] = useState([]);
+  const [draggedPiece, setDraggedPiece] = useState(null); // Track the currently dragged piece
   const [solution, setSolution] = useState([]);
   const [loading, setLoading] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
@@ -68,6 +69,33 @@ function App() {
     }
   };
 
+  const handleDragStart = (piece) => {
+    setDraggedPiece(piece);
+  };
+
+  const handleDrop = (row, col) => {
+    if (!draggedPiece) return;
+
+    const updatedBoard = [...boardData];
+    draggedPiece.shape.forEach(({ row: rOffset, col: cOffset }) => {
+      const targetRow = row + rOffset;
+      const targetCol = col + cOffset;
+      const cellIndex = updatedBoard.findIndex(
+        (cell) => cell.row === targetRow && cell.col === targetCol
+      );
+      if (cellIndex !== -1) {
+        updatedBoard[cellIndex] = {
+          ...updatedBoard[cellIndex],
+          pieceId: draggedPiece.id,
+          state: 'FILLED',
+        };
+      }
+    });
+
+    setBoardData(updatedBoard);
+    setDraggedPiece(null); // Clear the dragged piece
+  };
+
   return (
     <div className="app-root">
       <header className="app-header">
@@ -76,7 +104,7 @@ function App() {
       <main className="app-main">
         <div className="workspace-card">
           <div className="workspace-column">
-            <Board boardData={boardData} solution={solution} />
+            <Board boardData={boardData} onDrop={handleDrop} solution={solution} />
           </div>
           <div className="workspace-column">
             <div className="date-picker-container">
@@ -89,7 +117,7 @@ function App() {
                 className="date-picker"
               />
             </div>
-            <PiecesList pieces={pieces} />
+            <PiecesList pieces={pieces} onDragStart={handleDragStart} />
           </div>
         </div>
         <button onClick={handleSolve} disabled={loading} className="solve-button">

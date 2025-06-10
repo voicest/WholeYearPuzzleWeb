@@ -32,11 +32,24 @@
 }
 
 .piece-card {
+  cursor: pointer;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 5px;
+  transition: border-color 0.2s;
   background: #fff;
   border-radius: 8px;
-  padding: 8px;
   box-shadow: 0 1px 4px rgba(44, 62, 80, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.piece-card:hover {
+  border-color: #888;
+}
+
+.selected-piece {
+  border-color: #0078d4; /* Highlight color for selected piece */
+  background-color: #e6f7ff; /* Optional: Add a background color */
 }
