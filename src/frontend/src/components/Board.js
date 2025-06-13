@@ -47,6 +47,7 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
     setHoveredCell(null); // Clear the hovered cell when dragging leaves
   };
 
+
   return (
     <div
       className="board"
@@ -65,6 +66,8 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
           const isFilled = pieceId !== undefined && pieceId !== null;
           const isHovered = hoveredCell === key;
 
+          //console.log(`pieceId: ${pieceId}, hoveredCell: ${hoveredCell}, key: ${key}`);
+
           // If no cell exists in this grid position, render an empty-space placeholder
           if (!cell || !cell.label) {
             return (
@@ -82,6 +85,29 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
           }
 
           const isTarget = cell.state === 'TARGET' || targetSet.has(key);
+        
+          //Determine border sides
+          let borderTop, borderRight, borderBottom, borderLeft;
+          
+          if (isFilled) {
+            const upKey = `${r - 1}-${c}`;
+            const downKey = `${r + 1}-${c}`;
+            const leftKey = `${r}-${c - 1}`;
+            const rightKey = `${r}-${c + 1}`;
+
+            const upSame = assignment[upKey] === pieceId;
+            const downSame = assignment[downKey] === pieceId;
+            const leftSame = assignment[leftKey] === pieceId;
+            const rightSame = assignment[rightKey] === pieceId;
+
+            borderTop = upSame ? 'none' : '3px solid black';
+            borderBottom = downSame ? 'none' : '3px solid black';
+            borderLeft = leftSame ? 'none' : '3px solid black';
+            borderRight = rightSame ? 'none' : '3px solid black';
+          } else {
+            borderTop = borderBottom = borderLeft = borderRight = '1px solid #999';
+          }
+
 
           return (
             <div
@@ -95,9 +121,12 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
                   : isHovered
                   ? '#ffcccb' // Highlight color for hovered cells
                   : isFilled
-                  ? `hsl(${(pieceId * 40) % 360}, 70%, 50%)`
+                  ? `hsl(${(pieceId * 40) % 360}, 70%, 80%)`
                   : '#fff',
-                border: '1px solid #999',
+                borderTop,
+                borderRight,
+                borderBottom,
+                borderLeft,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
