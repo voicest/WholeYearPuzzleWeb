@@ -6,10 +6,11 @@ import './App.css';
 function App() {
   const [boardData, setBoardData] = useState([]);
   const [pieces, setPieces] = useState([]);
-  const [draggedPiece, setDraggedPiece] = useState(null); // Track the currently dragged piece
+  const [draggedPiece, setDraggedPiece] = useState(null);
   const [solution, setSolution] = useState([]);
   const [loading, setLoading] = useState(false);
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
+  const [selectedPiece, setSelectedPiece] = useState(null);
 
   // Fetch board and pieces definitions on mount
   useEffect(() => {
@@ -73,27 +74,40 @@ function App() {
     setDraggedPiece(piece);
   };
 
-  const handleDrop = (row, col) => {
+  // Handle drop on the board
+  const handleDropOnBoard = (row, col) => {
     if (!draggedPiece) return;
 
-    const updatedBoard = [...boardData];
-    draggedPiece.shape.forEach(({ row: rOffset, col: cOffset }) => {
-      const targetRow = row + rOffset;
-      const targetCol = col + cOffset;
-      const cellIndex = updatedBoard.findIndex(
-        (cell) => cell.row === targetRow && cell.col === targetCol
-      );
-      if (cellIndex !== -1) {
-        updatedBoard[cellIndex] = {
-          ...updatedBoard[cellIndex],
-          pieceId: draggedPiece.id,
-          state: 'FILLED',
-        };
-      }
-    });
+    // Calculate new filled cells based on piece shape and drop location
+    const newPlacement = {
+      pieceId: draggedPiece.id,
+      cells: draggedPiece.shape.map(({ row: r, col: c }) => ({
+        row: row + r,
+        col: col + c,
+      })),
+    };
 
-    setBoardData(updatedBoard);
-    setDraggedPiece(null); // Clear the dragged piece
+    setSolution((prev) => [...prev, newPlacement]);
+    setDraggedPiece(null);
+  };
+
+  // Rotate a piece by id
+  const rotatePiece = (pieceId) => {
+    setPieces((prevPieces) =>
+      prevPieces.map((piece) => {
+        if (piece.id !== pieceId) return piece;
+        const height = Math.max(...piece.shape.map(c => c.row)) + 1;
+        const rotatedShape = piece.shape.map(({ row, col }) => ({
+          row: col,
+          col: (height - 1) - row,
+        }));
+        // If this piece is selected, update selectedPiece as well
+        if (selectedPiece && selectedPiece.id === pieceId) {
+          setSelectedPiece({ ...piece, shape: rotatedShape });
+        }
+        return { ...piece, shape: rotatedShape };
+      })
+    );
   };
 
   return (
@@ -103,9 +117,11 @@ function App() {
       </header>
       <main className="app-main">
         <div className="workspace-card">
-          <div className="workspace-column">
-            <Board boardData={boardData} onDrop={handleDrop} solution={solution} />
-          </div>
+          <Board
+            boardData={boardData}
+            solution={solution}
+            onDrop={handleDropOnBoard}
+          />
           <div className="workspace-column">
             <div className="date-picker-container">
               <label htmlFor="target-date-picker">Select Solve Date:</label>
@@ -117,7 +133,13 @@ function App() {
                 className="date-picker"
               />
             </div>
-            <PiecesList pieces={pieces} onDragStart={handleDragStart} />
+            <PiecesList
+              pieces={pieces}
+              selectedPiece={selectedPiece}
+              setSelectedPiece={setSelectedPiece}
+              setDraggedPiece={setDraggedPiece}
+              rotatePiece={rotatePiece} // <-- pass down
+            />
           </div>
         </div>
         <button onClick={handleSolve} disabled={loading} className="solve-button">

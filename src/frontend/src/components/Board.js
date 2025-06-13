@@ -119,7 +119,7 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
                 backgroundColor: isTarget
                   ? '#ff3b3b'
                   : isHovered
-                  ? '#ffcccb' // Highlight color for hovered cells
+                  ? '#ffcccb'
                   : isFilled
                   ? `hsl(${(pieceId * 40) % 360}, 70%, 80%)`
                   : '#fff',
@@ -131,8 +131,15 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onDrop={(e) => handleDrop(e, r, c)}
-              onDragOver={(e) => handleDragOver(e, r, c)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setHoveredCell(null);
+                if (onDrop) onDrop(r, c);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setHoveredCell(`${r}-${c}`);
+              }}
               onDragLeave={handleDragLeave}
             >
               <span
