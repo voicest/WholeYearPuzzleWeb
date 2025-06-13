@@ -13,15 +13,41 @@ const PiecesList = ({ pieces }) => {
         event.preventDefault(); // Prevent default space bar behavior
         console.log('Rotating piece:', selectedPiece.id); // Debug: Log the selected piece ID
 
-        // Rotate the shape 90 degrees clockwise
-        const rotatedShape = selectedPiece.shape.map(({ row, col }) => ({
-          row: col,
-          col: -row, 
-        }));
+      /**
+      * Rotate a shape (list of Cells) 90° clockwise around (0,0)
+      * given that the shape’s bounding‐box is (height × width).
+      * NewRow = oldCol; NewCol = (height-1) - oldRow.
+      */
 
+      const height = Math.max(...selectedPiece.shape.map(c => c.row)) + 1; // Calculate height
+      const width = Math.max(...selectedPiece.shape.map(c => c.col)) + 1; // Calculate width
+      if (height > 0 && width > 0) {
+        console.log('Shape dimensions:', { height, width }); // Debug: Log the shape dimensions
+        // Map the shape to new coordinates after rotation
+        const rotatedShape = selectedPiece.shape.map(({ row, col }) => ({
+          row: col, // New row is the old column
+          col: (height - 1) - row, // New column is (height - 1) - old row
+        }));
         console.log('Rotated shape:', rotatedShape); // Debug: Log the rotated shape
         setSelectedPiece({ ...selectedPiece, shape: rotatedShape }); // Update the selected piece's shape
+      } else {
+        console.error('Invalid shape dimensions:', { height, width }); // Debug: Log invalid dimensions
+        // If the shape dimensions are invalid, we can either skip rotation or handle it gracefully
+        // For now, we will just log an error and not update the shape
+        console.error('Cannot rotate shape with invalid dimensions:', selectedPiece.shape);
+        return; 
       }
+      }
+      if (event.code === 'Escape') {
+        console.log('Deselecting piece'); // Debug: Log deselection
+        setSelectedPiece(null); // Deselect the piece
+      }
+      if (event.code === 'KeyR') {
+        console.log('Resetting piece'); // Debug: Log reset action
+        setSelectedPiece(null); // Reset the selected piece
+      }
+ 
+
     };
 
     // Attach the keydown listener to the document
