@@ -99,13 +99,58 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
             const downSame = assignment[downKey] === pieceId;
             const leftSame = assignment[leftKey] === pieceId;
             const rightSame = assignment[rightKey] === pieceId;
+           
+            //If the downKey is the edge of the board I want to draw a thicker border
+            //console.log(`${r}-${c} ${rows}-${cols} downKey: ${downKey}, leftKey: ${leftKey}, rightKey: ${rightKey}`);
 
-            borderTop = upSame ? 'none' : '3px solid black';
-            borderBottom = downSame ? 'none' : '3px solid black';
-            borderLeft = leftSame ? 'none' : '3px solid black';
-            borderRight = rightSame ? 'none' : '3px solid black';
+            let topSize =2;
+            let downSize = 2;
+            let leftSize = 2;
+            let rightSize = 2;
+            
+
+            if (downKey.startsWith(`${rows}-`)) {
+              downSize = 4;
+
+            } 
+            
+            if (upKey.startsWith('-')) {
+              topSize = 4;
+          
+            } 
+            
+            if (leftKey.endsWith('-0')) {
+              leftSize =4
+            } 
+            
+            if (rightKey.endsWith(`-${cols - 1}`)) {
+              rightSize = 4;
+            }
+            
+            borderTop = upSame ? 'none' : `${topSize}px solid black`;
+            borderBottom = downSame ? 'none' : `${downSize}px solid black`;
+            borderLeft = leftSame ? 'none' : `${leftSize}px solid black`;
+            borderRight =  rightSame ? 'none' : `${rightSize}px solid black`;
+             
           } else {
+
             borderTop = borderBottom = borderLeft = borderRight = '1px solid #999';
+          }
+
+          if (isTarget) {
+            //IF the cell next to the target is filled, make the border thicker
+            const upKey = `${r - 1}-${c}`;
+            const downKey = `${r + 1}-${c}`;
+            const leftKey = `${r}-${c - 1}`;
+            const rightKey = `${r}-${c + 1}`;     
+            const upFilled = assignment[upKey] !== undefined;
+            const downFilled = assignment[downKey] !== undefined;
+            const leftFilled = assignment[leftKey] !== undefined;
+            const rightFilled = assignment[rightKey] !== undefined;
+            if (upFilled) borderTop = '2px solid black';
+            if (downFilled) borderBottom = '2px solid black';
+            if (leftFilled) borderLeft = '2px solid black';
+            if (rightFilled) borderRight = '2px solid black';
           }
 
 

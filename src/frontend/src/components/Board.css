@@ -1,19 +1,21 @@
 .board {
-  background-color: #ddd;
-  display: flex;
-  padding: 20px;
-  display: inline-block;
-
+  display: grid;
+  grid-template-rows: repeat(auto-fill, 60px); /* Ensure consistent row height */
+  grid-template-columns: repeat(auto-fill, 60px); /* Ensure consistent column width */
+  gap: 0; /* Remove gaps between cells */
+  border: 1px solid #999; /* Add a border around the board */
 }
+
 .cell {
+  width: 60px;
+  height: 60px;
+  box-sizing: border-box; /* Ensure padding and border are included in dimensions */
+  border: 1px solid #999; /* Add consistent borders to cells */
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #999;
-  position: relative;
-  width: 60px; /* Increased width */
-  height: 60px; /* Increased height */
 }
+
 .empty-cell {
   background: #e0e0e0;
   border: 1px solid #bbb;
@@ -23,4 +25,13 @@
 .cell-label {
   font-size: 14px; /* Adjusted font size for larger cells */
   color: #333;
+}
+
+.filled-cell {
+  background-color: #2d3a4b; /* Color for filled cells */
+}
+
+.hovered-cell {
+  background-color: #ffcccb; /* Highlight color for hovered cells */
+  border: 2px solid #ff0000; /* Optional: Add a border for emphasis */
 }
