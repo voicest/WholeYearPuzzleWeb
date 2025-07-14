@@ -4,7 +4,7 @@ import './PiecesList.css';
 /**
  * pieces: array of objects { id: number, name: string, shape: array of {row, col} }
  */
-const PiecesList = ({ pieces, selectedPiece, setSelectedPiece, setDraggedPiece, rotatePiece }) => {
+const PiecesList = ({ pieces, selectedPiece, setSelectedPiece, setDraggedPiece, rotatePiece, handlePieceRestore }) => {
   useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.code === 'Space' && selectedPiece) {
@@ -28,16 +28,21 @@ const PiecesList = ({ pieces, selectedPiece, setSelectedPiece, setDraggedPiece, 
       <div className="pieces-grid">
         {pieces.map((piece) => {
           const isSelected = selectedPiece?.id === piece.id;
-          // Use the rotated shape if selected, otherwise the original
           const pieceToRender = isSelected ? selectedPiece : piece;
           return (
             <div
-              className={`piece-card ${isSelected ? 'selected-piece' : ''}`}
+              className={`piece-card ${isSelected ? 'selected-piece' : ''} ${piece.used ? 'piece-used' : ''}`}
               key={piece.id}
-              onClick={() => handleSelectPiece(piece)}
-              draggable
-              onDragStart={() => setDraggedPiece && setDraggedPiece(pieceToRender)}
+              onClick={() => !piece.used && handleSelectPiece(piece)}
+              onDoubleClick={() => piece.used && handlePieceRestore && handlePieceRestore(piece.id)}
+              draggable={!piece.used}
+              onDragStart={() => !piece.used && setDraggedPiece && setDraggedPiece(pieceToRender)}
               onDragEnd={() => setDraggedPiece && setDraggedPiece(null)}
+              style={{
+                opacity: piece.used ? 0.5 : 1,
+                pointerEvents: piece.used ? 'auto' : 'auto', // allow double click on disabled
+                cursor: piece.used ? 'pointer' : 'grab',
+              }}
             >
               {renderShape(pieceToRender.shape, pieceToRender.id)}
             </div>

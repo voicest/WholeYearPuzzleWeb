@@ -79,12 +79,57 @@ function App() {
     if (!draggedPiece) return;
 
     // Calculate new filled cells based on piece shape and drop location
+    const newCells = draggedPiece.shape.map(({ row: r, col: c }) => ({
+      row: row + r,
+      col: col + c,
+    }));
+
+    // Check for overlap with already filled cells
+    const filledCells = new Set();
+    solution.forEach(({ cells }) => {
+      cells.forEach(({ row, col }) => {
+        filledCells.add(`${row}-${col}`);
+      });
+    });
+
+    // Check for overlap with target cells as well
+    const targetCellSet = new Set();
+    boardData.forEach(cell => {
+      if (cell.state === 'TARGET') {
+        targetCellSet.add(`${cell.row}-${cell.col}`);
+      }
+    });
+
+    // Check that all cells are on the board (i.e., exist in boardData and are not OFF_BOARD)
+    const boardCellSet = new Set(
+      boardData.filter(cell => cell.state !== 'OFF_BOARD').map(cell => `${cell.row}-${cell.col}`)
+    );
+    const allOnBoard = newCells.every(({ row, col }) => boardCellSet.has(`${row}-${col}`));
+    if (!allOnBoard) {
+      alert('Cannot place piece: part of the piece is off the board.');
+      setDraggedPiece(null);
+      return;
+    }
+
+    const willOverlap = newCells.some(({ row, col }) =>
+      filledCells.has(`${row}-${col}`) || targetCellSet.has(`${row}-${col}`)
+    );
+    if (willOverlap) {
+      alert('Cannot place piece: it overlaps with already filled spaces or target cells.');
+      setDraggedPiece(null);
+      return;
+    }
+
+    // Mark the piece as used
+    setPieces((prevPieces) =>
+      prevPieces.map((piece) =>
+        piece.id === draggedPiece.id ? { ...piece, used: true } : piece
+      )
+    );
+
     const newPlacement = {
       pieceId: draggedPiece.id,
-      cells: draggedPiece.shape.map(({ row: r, col: c }) => ({
-        row: row + r,
-        col: col + c,
-      })),
+      cells: newCells,
     };
 
     setSolution((prev) => [...prev, newPlacement]);
@@ -110,6 +155,18 @@ function App() {
     );
   };
 
+  // Add this function to App.js
+  const handlePieceRestore = (pieceId) => {
+    // Remove the piece's placement from the solution
+    setSolution((prev) => prev.filter((placement) => placement.pieceId !== pieceId));
+    // Mark the piece as available again
+    setPieces((prevPieces) =>
+      prevPieces.map((piece) =>
+        piece.id === pieceId ? { ...piece, used: false } : piece
+      )
+    );
+  };
+
   return (
     <div className="app-root">
       <header className="app-header">
@@ -121,6 +178,7 @@ function App() {
             boardData={boardData}
             solution={solution}
             onDrop={handleDropOnBoard}
+            draggedPiece={draggedPiece}
           />
           <div className="workspace-column">
             <div className="date-picker-container">
@@ -138,7 +196,8 @@ function App() {
               selectedPiece={selectedPiece}
               setSelectedPiece={setSelectedPiece}
               setDraggedPiece={setDraggedPiece}
-              rotatePiece={rotatePiece} // <-- pass down
+              rotatePiece={rotatePiece}
+              handlePieceRestore={handlePieceRestore}
             />
           </div>
         </div>

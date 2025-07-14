@@ -1,27 +1,19 @@
 import React, { useState } from 'react';
 import './Board.css';
 
-/**
- * boardData: array of objects { row: number, col: number, label: string }
- * solution: array of placements { pieceId, cells: [{row, col}] }
- * targetCells: array of { row, col }
- */
-const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
-  const [hoveredCell, setHoveredCell] = useState(null); // Track the currently hovered cell
+const Board = ({ boardData, solution, targetCells = [], onDrop, draggedPiece }) => {
+  const [hoveredCell, setHoveredCell] = useState(null);
 
   if (!boardData.length) return <div className="board">Loading board...</div>;
 
-  // Determine dimensions
   const rows = Math.max(...boardData.map((c) => c.row)) + 1;
   const cols = Math.max(...boardData.map((c) => c.col)) + 1;
 
-  // Create a map for quick lookup
   const cellMap = {};
   boardData.forEach((cell) => {
     cellMap[`${cell.row}-${cell.col}`] = cell;
   });
 
-  // Create a map of solution assignments: key "row-col" to pieceId
   const assignment = {};
   solution.forEach(({ pieceId, cells }) => {
     cells.forEach(({ row, col }) => {
@@ -29,24 +21,31 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
     });
   });
 
-  // Create a set for fast target lookup
   const targetSet = new Set(targetCells.map((tc) => `${tc.row}-${tc.col}`));
+
+  // Calculate hovered shape cells if dragging a piece
+  let hoveredShapeCells = new Set();
+  if (hoveredCell && draggedPiece && draggedPiece.shape) {
+    const [hoverRow, hoverCol] = hoveredCell.split('-').map(Number);
+    draggedPiece.shape.forEach(({ row, col }) => {
+      hoveredShapeCells.add(`${hoverRow + row}-${hoverCol + col}`);
+    });
+  }
 
   const handleDrop = (e, row, col) => {
     e.preventDefault();
-    setHoveredCell(null); // Clear the hovered cell
-    onDrop(row, col);
+    setHoveredCell(null);
+    if (onDrop) onDrop(row, col);
   };
 
   const handleDragOver = (e, row, col) => {
     e.preventDefault();
-    setHoveredCell(`${row}-${col}`); // Update the hovered cell
+    setHoveredCell(`${row}-${col}`);
   };
 
   const handleDragLeave = () => {
-    setHoveredCell(null); // Clear the hovered cell when dragging leaves
+    setHoveredCell(null);
   };
-
 
   return (
     <div
@@ -64,18 +63,18 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
           const cell = cellMap[key];
           const pieceId = assignment[key];
           const isFilled = pieceId !== undefined && pieceId !== null;
-          const isHovered = hoveredCell === key;
+          const isHovered = hoveredShapeCells.has(key);
 
-          //console.log(`pieceId: ${pieceId}, hoveredCell: ${hoveredCell}, key: ${key}`);
+          const isTarget = cell?.state === 'TARGET' || targetSet.has(key);
 
-          // If no cell exists in this grid position, render an empty-space placeholder
-          if (!cell || !cell.label) {
+          // Shade OFF_BOARD cells gray
+          if (cell?.state === 'OFF_BOARD') {
             return (
               <div
                 key={key}
                 className="empty-cell"
                 style={{
-                  backgroundColor: '#e0e0e0',
+                  backgroundColor: '#55525265',
                   border: '1px solid #bbb',
                   width: '60px',
                   height: '60px',
@@ -84,8 +83,6 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
             );
           }
 
-          const isTarget = cell.state === 'TARGET' || targetSet.has(key);
-        
           //Determine border sides
           let borderTop, borderRight, borderBottom, borderLeft;
           
@@ -157,14 +154,14 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
           return (
             <div
               key={key}
-              className={`cell ${cell.state === 'FILLED' ? 'filled-cell' : ''} ${
+              className={`cell ${cell?.state === 'FILLED' ? 'filled-cell' : ''} ${
                 isHovered ? 'hovered-cell' : ''
               }`}
               style={{
-                backgroundColor: isTarget
-                  ? '#ff3b3b'
-                  : isHovered
+                backgroundColor: isHovered
                   ? '#ffcccb'
+                  : isTarget
+                  ? '#ff3b3b'
                   : isFilled
                   ? `hsl(${(pieceId * 40) % 360}, 70%, 80%)`
                   : '#fff',
@@ -176,15 +173,8 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onDrop={(e) => {
-                e.preventDefault();
-                setHoveredCell(null);
-                if (onDrop) onDrop(r, c);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setHoveredCell(`${r}-${c}`);
-              }}
+              onDrop={(e) => handleDrop(e, r, c)}
+              onDragOver={(e) => handleDragOver(e, r, c)}
               onDragLeave={handleDragLeave}
             >
               <span
@@ -195,7 +185,7 @@ const Board = ({ boardData, solution, targetCells = [], onDrop }) => {
                     : {}
                 }
               >
-                {cell.label}
+                {cell?.label}
               </span>
             </div>
           );
