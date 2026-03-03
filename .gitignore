@@ -3,6 +3,7 @@
 
 # Ignore Gradle build output directory
 build
+bin/*
 
 src/frontend/node_modules/*
 # Ignore Node.js dependencies directory
