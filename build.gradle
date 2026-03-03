@@ -3,6 +3,7 @@ plugins {
     id 'application'
     id 'org.springframework.boot' version '3.2.5'
     id 'io.spring.dependency-management' version '1.1.4'
+    id 'com.github.node-gradle.node' version '7.1.0'
 }
 
 group = 'com.wholeyear'
@@ -21,3 +22,34 @@ dependencies {
 application {
     mainClass = 'com.wholeyear.solver.WholeYearSolverApiApplication'
 }
+
+// ─── Frontend build integration ─────────────────────────────────────────────
+
+node {
+    version = '20.18.0'
+    download = true
+    nodeProjectDir = file("${project.projectDir}/src/frontend")
+}
+
+task installFrontend(type: com.github.gradle.node.npm.task.NpmTask) {
+    description = 'Install frontend npm dependencies'
+    args = ['install']
+    workingDir = file("${project.projectDir}/src/frontend")
+}
+
+task buildFrontend(type: com.github.gradle.node.npm.task.NpmTask) {
+    description = 'Build the React frontend for production'
+    dependsOn installFrontend
+    args = ['run', 'build']
+    workingDir = file("${project.projectDir}/src/frontend")
+}
+
+task copyFrontend(type: Copy) {
+    description = 'Copy React build output into Spring Boot static resources'
+    dependsOn buildFrontend
+    from "${project.projectDir}/src/frontend/build"
+    into "${project.buildDir}/resources/main/static"
+}
+
+// Ensure the frontend is built and copied before the jar is assembled
+processResources.dependsOn copyFrontend

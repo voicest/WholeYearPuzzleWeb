@@ -11,7 +11,7 @@ import com.wholeyear.model.Board;
 import com.wholeyear.model.Cell;
 import com.wholeyear.model.Piece;
 
-public class Defintion {
+public class Definition {
     
       public static List<Piece> loadAllPieces() {
         List<Piece> pieces = new ArrayList<>();

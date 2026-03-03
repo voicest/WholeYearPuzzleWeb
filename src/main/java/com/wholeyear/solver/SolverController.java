@@ -1,7 +1,7 @@
 package com.wholeyear.solver;
 
 import com.wholeyear.model.Piece;
-import com.wholeyear.util.Defintion;
+import com.wholeyear.util.Definition;
 import com.wholeyear.model.Board;
 import com.wholeyear.util.Solver;
 import com.wholeyear.util.Placement;
@@ -26,8 +26,8 @@ public class SolverController {
 
 
     public SolverController() {
-        this.pieces = Defintion.loadAllPieces();
-        this.board = Defintion.createWholeYearPuzzleBoard();
+        this.pieces = Definition.loadAllPieces();
+        this.board = Definition.createWholeYearPuzzleBoard();
 
         //Calculate todays date and month in short format
         Calendar calendar = Calendar.getInstance();
