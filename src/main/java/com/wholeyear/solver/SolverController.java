@@ -8,156 +8,138 @@ import com.wholeyear.util.Placement;
 import com.wholeyear.model.BoardCell;
 import com.wholeyear.model.Cell;
 import com.wholeyear.model.PieceDto;
-import com.wholeyear.model.Board.CellState;
 import com.wholeyear.util.PlacementDto;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
 @RestController
 @RequestMapping("/api")
 public class SolverController {
+    private static final Logger log = LoggerFactory.getLogger(SolverController.class);
+
+    private static final String[] MONTHS = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
     private final List<Piece> pieces;
     private final Board board;
-    //Create a map of peice id to index
-    private final Map<String, Integer> pieceIdToIndexMap = new HashMap<>();
-    private final List<Cell> targetCells = new ArrayList<>();
-
+    private final Map<String, Integer> pieceIdToIndexMap;
 
     public SolverController() {
         this.pieces = Definition.loadAllPieces();
         this.board = Definition.createWholeYearPuzzleBoard();
 
-        //Calculate todays date and month in short format
-        Calendar calendar = Calendar.getInstance();
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
-        int month = calendar.get(Calendar.MONTH) + 1; // Calendar.MONTH is zero-based
-        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-        String monthLabel = months[month - 1]; // Convert to 3-letter month format
-        System.out.println("Today's date: " + day + " " + monthLabel);
-        //Set the target cells based on today's date
-        //Reset the board
-
-
-        //Set the target cells for the board
-        Cell targetCell1 = board.findCellByLabel("" + day);
-        if (targetCell1 == null) {
-            System.out.println("No target cell found for day: " + day);
-            return; // Exit if no target cell is found
+        Map<String, Integer> map = new HashMap<>();
+        for (int i = 0; i < pieces.size(); i++) {
+            map.put(pieces.get(i).getId(), i);
         }
-        Cell targetCell2 = board.findCellByLabel(monthLabel);
-        if (targetCell2 == null) {
-            System.out.println("No target cell found for month: " + monthLabel);
-            return; // Exit if no target cell is found
-        }
-        
-        targetCells.add(targetCell1);
-        targetCells.add(targetCell2);
-
-        for (Cell cell : targetCells) {
-            //Set the target cells on the board
-            this.board.setTarget(cell.getRow(), cell.getCol());
-        }
-        
+        this.pieceIdToIndexMap = Collections.unmodifiableMap(map);
     }
 
     @PostMapping("/solve")
-    //@GetMapping("/solve")
-    public List<PlacementDto> solve() {
+    public List<PlacementDto> solve(@RequestParam(value = "date", required = false) String date) {
+        long start = System.currentTimeMillis();
+        log.info("POST /api/solve date={}", date);
 
-        Solver solver = new com.wholeyear.util.Solver(board, pieces);
+        String[] labels = parseDateToLabels(date);
+
+        Board boardCopy = new Board(board);
+        Cell monthCell = boardCopy.findCellByLabel(labels[0]);
+        Cell dayCell = boardCopy.findCellByLabel(labels[1]);
+
+        if (monthCell == null || dayCell == null) {
+            log.warn("POST /api/solve — no cell found for {} {} ({}ms)",
+                    labels[0], labels[1], System.currentTimeMillis() - start);
+            return Collections.emptyList();
+        }
+
+        boardCopy.setTarget(monthCell.getRow(), monthCell.getCol());
+        boardCopy.setTarget(dayCell.getRow(), dayCell.getCol());
+
+        Solver solver = new Solver(boardCopy, pieces);
         List<Placement> placements = solver.solve();
 
         if (placements == null || placements.isEmpty()) {
-            System.out.println("No solution found.");
+            log.warn("POST /api/solve — no solution for {} {} ({}ms)",
+                    labels[0], labels[1], System.currentTimeMillis() - start);
             return Collections.emptyList();
         }
 
         List<PlacementDto> placementDtos = new ArrayList<>();
-        
         for (Placement placement : placements) {
-            //Get the index of the piece in the placement
             int pieceIndex = pieceIdToIndexMap.get(placement.getPieceId());
-            PlacementDto dto = new PlacementDto(pieceIndex, placement.getCoveredCells());
-            placementDtos.add(dto);     
-        
+            placementDtos.add(new PlacementDto(pieceIndex, placement.getCoveredCells()));
         }
-        return placementDtos;
 
+        log.info("POST /api/solve — solved {} {} → {} placements ({}ms)",
+                labels[0], labels[1], placementDtos.size(), System.currentTimeMillis() - start);
+        return placementDtos;
     }
 
     @GetMapping(path = "/pieces", produces = "application/json")
     public List<PieceDto> getPieces() {
+        long start = System.currentTimeMillis();
+        log.info("GET /api/pieces");
+
         List<PieceDto> pieceDtos = new ArrayList<>();
-        int i = 0;
-        for (Piece piece : pieces) {
-            PieceDto dto = new PieceDto(i, piece.getId(), piece.getCanonicalCells());
-            //Store the piece id to index mapping
-            pieceIdToIndexMap.put(piece.getId(), i);
-            //System.out.println("Piece ID: " + piece.getId() + ", Index: " + i);
-            pieceDtos.add(dto);
-            i++;
+        for (int i = 0; i < pieces.size(); i++) {
+            Piece piece = pieces.get(i);
+            pieceDtos.add(new PieceDto(i, piece.getId(), piece.getCanonicalCells()));
         }
+
+        log.info("GET /api/pieces — {} pieces ({}ms)", pieceDtos.size(), System.currentTimeMillis() - start);
         return pieceDtos;
     }
 
     @GetMapping("/board")
-    public List<BoardCell> getBoard() {
-        //For each cell on the board, create a BoardCell object
-        List<BoardCell> boardCells = new ArrayList<>();
-        for (int r = 0; r < board.getRows(); r++) {
-            for (int c = 0; c < board.getCols(); c++) {
-                String label = board.getLabel(r, c);  
-                CellState state = board.getCellState(r, c); 
-                BoardCell cell = new BoardCell(r, c, label, state);
-                boardCells.add(cell);
-            }
-        }
-        return boardCells;
-        
-        
+    public List<BoardCell> getBoard(@RequestParam(value = "date", required = false) String date) {
+        long start = System.currentTimeMillis();
+        log.info("GET /api/board date={}", date);
+
+        String[] labels = parseDateToLabels(date);
+        List<BoardCell> cells = board.getBoardCellsForDate(labels[0], labels[1]);
+
+        log.info("GET /api/board — {} {} → {} cells ({}ms)",
+                labels[0], labels[1], cells.size(), System.currentTimeMillis() - start);
+        return cells;
     }
 
-    @PostMapping("/updateTargetDate")
-    public void updateTargetDate(@RequestParam("date") String date) {
-        // Parse the date (assuming format is YYYY-MM-DD)
+    /**
+     * Parses a YYYY-MM-DD date string into [monthLabel, dayLabel].
+     * Defaults to today when date is null or empty.
+     */
+    private String[] parseDateToLabels(String date) {
+        if (date == null || date.isEmpty()) {
+            Calendar calendar = Calendar.getInstance();
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+            int month = calendar.get(Calendar.MONTH) + 1;
+            return new String[]{MONTHS[month - 1], String.valueOf(day)};
+        }
+
         String[] dateParts = date.split("-");
-        int year = Integer.parseInt(dateParts[0]);
-        int month = Integer.parseInt(dateParts[1]);
-        int day = Integer.parseInt(dateParts[2]);
-
-        //convert month to three letter month
-        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-        if (month < 1 || month > 12) {
-            throw new IllegalArgumentException("Month must be between 1 and 12");
+        if (dateParts.length != 3) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid date format. Use YYYY-MM-DD");
         }
-        String monthLabel = months[month - 1];  
 
-
-        System.out.println("Updating target date to: " + year + "-" + month + "-" + day);
-
-        // Reset the board
-        this.board.reset();
-
-        // Update target cells based on the selected date
-        targetCells.clear();
-        Cell targetCell1 = board.findCellByLabel("" + day);
-        if (targetCell1 == null) {
-            System.out.println("No target cell found for day: " + day);
-            return; // Exit if no target cell is found
-        }
-        //Cell targetCell1 = new Cell(month - 1, day % board.getCols());
-        Cell targetCell2 = board.findCellByLabel(monthLabel);
-        if (targetCell2 == null) {
-            System.out.println("No target cell found for month: " + monthLabel);
-            return; // Exit if no target cell is found
-        }
-        targetCells.add(targetCell1);
-        targetCells.add(targetCell2);
-
-        for (Cell cell : targetCells) {
-            this.board.setTarget(cell.getRow(), cell.getCol());
+        try {
+            int month = Integer.parseInt(dateParts[1]);
+            int day = Integer.parseInt(dateParts[2]);
+            if (month < 1 || month > 12 || day < 1 || day > 31) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Invalid date values");
+            }
+            return new String[]{MONTHS[month - 1], String.valueOf(day)};
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid date format. Use YYYY-MM-DD");
         }
     }
 }

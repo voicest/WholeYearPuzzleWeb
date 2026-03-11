@@ -251,4 +251,24 @@ public class Board {
         }
         return grid[r][c];
     }
+
+    /**
+     * Returns a list of BoardCell objects for the entire grid, with TARGET state
+     * computed for the given month and day labels without mutating the board.
+     */
+    public List<BoardCell> getBoardCellsForDate(String monthLabel, String dayLabel) {
+        List<BoardCell> boardCells = new ArrayList<>();
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                String label = labels[r][c];
+                CellState state = grid[r][c];
+                if (state == CellState.FILLABLE && label != null
+                        && (label.equals(monthLabel) || label.equals(dayLabel))) {
+                    state = CellState.TARGET;
+                }
+                boardCells.add(new BoardCell(r, c, label, state));
+            }
+        }
+        return boardCells;
+    }
 }

@@ -23,7 +23,7 @@ class SolverControllerTest {
 
     @Test
     void getBoardReturns200() throws Exception {
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
@@ -31,14 +31,14 @@ class SolverControllerTest {
     @Test
     void getBoardReturns63Cells() throws Exception {
         // 7 rows × 9 cols = 63 total cells (including OFF_BOARD)
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(63)));
     }
 
     @Test
     void getBoardCellsHaveRequiredFields() throws Exception {
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].row").exists())
                 .andExpect(jsonPath("$[0].col").exists())
@@ -46,14 +46,20 @@ class SolverControllerTest {
     }
 
     @Test
-    void getBoardContainsTargetCells() throws Exception {
-        // Controller sets today's date as target on startup; there should be 2 TARGET cells
-        MvcResult result = mockMvc.perform(get("/api/board"))
+    void getBoardContainsCorrectTargetCells() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "2026-03-11"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.label == 'Mar' && @.state == 'TARGET')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.label == '11' && @.state == 'TARGET')]", hasSize(1)));
+    }
+
+    @Test
+    void getBoardHasExactly2TargetCells() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andReturn();
 
         String json = result.getResponse().getContentAsString();
-        // Count occurrences of "TARGET"
         int count = 0;
         int idx = 0;
         while ((idx = json.indexOf("\"TARGET\"", idx)) != -1) {
@@ -66,21 +72,21 @@ class SolverControllerTest {
 
     @Test
     void getBoardContainsOffBoardCells() throws Exception {
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.state == 'OFF_BOARD')]", hasSize(greaterThan(0))));
     }
 
     @Test
     void getBoardContainsFillableCells() throws Exception {
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.state == 'FILLABLE')]", hasSize(greaterThan(0))));
     }
 
     @Test
     void getBoardContainsMonthLabels() throws Exception {
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.label == 'Jan')]", hasSize(1)))
                 .andExpect(jsonPath("$[?(@.label == 'Dec')]", hasSize(1)));
@@ -88,10 +94,63 @@ class SolverControllerTest {
 
     @Test
     void getBoardContainsDayLabels() throws Exception {
-        mockMvc.perform(get("/api/board"))
+        mockMvc.perform(get("/api/board").param("date", "2024-06-15"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.label == '1')]", hasSize(1)))
                 .andExpect(jsonPath("$[?(@.label == '31')]", hasSize(1)));
+    }
+
+    @Test
+    void getBoardWithoutDateDefaultsToToday() throws Exception {
+        // Calling without a date param should still return 200 with 2 TARGET cells
+        MvcResult result = mockMvc.perform(get("/api/board"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(63)))
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        int count = 0;
+        int idx = 0;
+        while ((idx = json.indexOf("\"TARGET\"", idx)) != -1) {
+            count++;
+            idx++;
+        }
+        org.junit.jupiter.api.Assertions.assertEquals(2, count,
+                "Board without date param should still have 2 TARGET cells (today's date)");
+    }
+
+    @Test
+    void getBoardWithInvalidDateReturns400() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "invalid"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBoardWithInvalidMonthReturns400() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "2024-13-01"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBoardWithInvalidDayReturns400() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "2024-01-32"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getBoardJan1HasCorrectTargets() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "2024-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.label == 'Jan' && @.state == 'TARGET')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.label == '1' && @.state == 'TARGET')]", hasSize(1)));
+    }
+
+    @Test
+    void getBoardDec31HasCorrectTargets() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "2024-12-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.label == 'Dec' && @.state == 'TARGET')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.label == '31' && @.state == 'TARGET')]", hasSize(1)));
     }
 
     // ─── GET /api/pieces ────────────────────────────────────────────────
@@ -135,88 +194,71 @@ class SolverControllerTest {
                 .andExpect(jsonPath("$[8].shape", hasSize(greaterThan(0))));
     }
 
-    // ─── POST /api/updateTargetDate ─────────────────────────────────────
+    // ─── POST /api/updateTargetDate (removed) ───────────────────────────
 
     @Test
-    void updateTargetDateReturns200() throws Exception {
+    void updateTargetDateEndpointIsRemoved() throws Exception {
         mockMvc.perform(post("/api/updateTargetDate")
                         .param("date", "2024-06-15"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void updateTargetDateChangesBoardState() throws Exception {
-        // Update to Jun 15
-        mockMvc.perform(post("/api/updateTargetDate")
-                        .param("date", "2024-06-15"))
-                .andExpect(status().isOk());
-
-        // Verify the board now has Jun and 15 as TARGET cells
-        mockMvc.perform(get("/api/board"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.label == 'Jun' && @.state == 'TARGET')]", hasSize(1)))
-                .andExpect(jsonPath("$[?(@.label == '15' && @.state == 'TARGET')]", hasSize(1)));
-    }
-
-    @Test
-    void updateTargetDateHandlesJan1() throws Exception {
-        mockMvc.perform(post("/api/updateTargetDate")
-                        .param("date", "2024-01-01"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/api/board"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.label == 'Jan' && @.state == 'TARGET')]", hasSize(1)))
-                .andExpect(jsonPath("$[?(@.label == '1' && @.state == 'TARGET')]", hasSize(1)));
-    }
-
-    @Test
-    void updateTargetDateHandlesDec31() throws Exception {
-        mockMvc.perform(post("/api/updateTargetDate")
-                        .param("date", "2024-12-31"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get("/api/board"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.label == 'Dec' && @.state == 'TARGET')]", hasSize(1)))
-                .andExpect(jsonPath("$[?(@.label == '31' && @.state == 'TARGET')]", hasSize(1)));
+                .andExpect(status().isNotFound());
     }
 
     // ─── POST /api/solve ────────────────────────────────────────────────
 
     @Test
     void solveReturns200() throws Exception {
-        // First set a known date
-        mockMvc.perform(post("/api/updateTargetDate")
-                        .param("date", "2024-01-01"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(post("/api/solve"))
+        mockMvc.perform(post("/api/solve").param("date", "2024-01-01"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
     }
 
     @Test
     void solveReturns9Placements() throws Exception {
-        mockMvc.perform(post("/api/updateTargetDate")
-                        .param("date", "2024-01-01"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(post("/api/solve"))
+        mockMvc.perform(post("/api/solve").param("date", "2024-01-01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(9)));
     }
 
     @Test
     void solvePlacementsHaveRequiredFields() throws Exception {
-        mockMvc.perform(post("/api/updateTargetDate")
-                        .param("date", "2024-01-01"))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(post("/api/solve"))
+        mockMvc.perform(post("/api/solve").param("date", "2024-01-01"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].pieceId").exists())
                 .andExpect(jsonPath("$[0].cells").exists())
                 .andExpect(jsonPath("$[0].cells", hasSize(greaterThan(0))));
+    }
+
+    @Test
+    void solveWithoutDateDefaultsToToday() throws Exception {
+        mockMvc.perform(post("/api/solve"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(9)));
+    }
+
+    @Test
+    void solveWithInvalidDateReturns400() throws Exception {
+        mockMvc.perform(post("/api/solve").param("date", "not-a-date"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ─── Statelessness: concurrent dates don't interfere ────────────────
+
+    @Test
+    void boardForDifferentDatesReturnsDifferentTargets() throws Exception {
+        mockMvc.perform(get("/api/board").param("date", "2024-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.label == 'Jan' && @.state == 'TARGET')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.label == '1' && @.state == 'TARGET')]", hasSize(1)));
+
+        mockMvc.perform(get("/api/board").param("date", "2024-12-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.label == 'Dec' && @.state == 'TARGET')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.label == '31' && @.state == 'TARGET')]", hasSize(1)));
+
+        // Verify first date still works (no shared state corruption)
+        mockMvc.perform(get("/api/board").param("date", "2024-01-01"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.label == 'Jan' && @.state == 'TARGET')]", hasSize(1)))
+                .andExpect(jsonPath("$[?(@.label == '1' && @.state == 'TARGET')]", hasSize(1)));
     }
 }

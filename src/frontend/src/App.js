@@ -13,11 +13,11 @@ function App() {
   const [targetDate, setTargetDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
   const [selectedPiece, setSelectedPiece] = useState(null);
 
-  // Fetch board and pieces definitions on mount
+  // Fetch board (with date) and pieces definitions on mount
   useEffect(() => {
     async function fetchData() {
       try {
-        const boardRes = await fetch('/api/board');
+        const boardRes = await fetch(`/api/board?date=${targetDate}`);
         if (!boardRes.ok) {
           throw new Error(`HTTP error! status: ${boardRes.status}`);
         }
@@ -38,7 +38,7 @@ function App() {
   const handleSolve = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/solve', { method: 'POST' });
+      const res = await fetch(`/api/solve?date=${targetDate}`, { method: 'POST' });
       const solJson = await res.json();
       setSolution(solJson);
     } catch (err) {
@@ -49,25 +49,16 @@ function App() {
 
   // Handle date change
   const handleDateChange = async (event) => {
-    //reset the solution when the date changes
     setSolution([]);
     const selectedDate = event.target.value;
     setTargetDate(selectedDate);
 
     try {
-      await fetch('/api/updateTargetDate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `date=${selectedDate}`,
-      });
-      // Refetch board data after updating the target date
-      const boardRes = await fetch('/api/board');
+      const boardRes = await fetch(`/api/board?date=${selectedDate}`);
       const boardJson = await boardRes.json();
       setBoardData(boardJson);
     } catch (err) {
-      console.error('Error updating target date:', err);
+      console.error('Error fetching board:', err);
     }
   };
 
