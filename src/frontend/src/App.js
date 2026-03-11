@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Board from './components/Board';
 import PiecesList from './components/PiecesList';
+import Instructions from './components/Instructions';
 import './App.css';
 
 function App() {
@@ -188,6 +189,7 @@ function App() {
         <h1>Whole Year Puzzle Solver</h1>
       </header>
       <main className="app-main">
+        <Instructions />
         <div className="workspace-card">
           <Board
             boardData={boardData}
