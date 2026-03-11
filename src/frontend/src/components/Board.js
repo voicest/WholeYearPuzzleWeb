@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Board.css';
 
-const Board = ({ boardData, solution, targetCells = [], onDrop, draggedPiece }) => {
+const Board = ({ boardData, solution, targetCells = [], onDrop, draggedPiece, onCellClick }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
 
   if (!boardData.length) return <div className="board">Loading board...</div>;
@@ -156,7 +156,7 @@ const Board = ({ boardData, solution, targetCells = [], onDrop, draggedPiece }) 
               key={key}
               className={`cell ${cell?.state === 'FILLED' ? 'filled-cell' : ''} ${
                 isHovered ? 'hovered-cell' : ''
-              }`}
+              } ${isFilled ? 'placed-piece' : ''}`}
               style={{
                 backgroundColor: isHovered
                   ? '#ffcccb'
@@ -173,6 +173,7 @@ const Board = ({ boardData, solution, targetCells = [], onDrop, draggedPiece }) 
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
+              onClick={() => isFilled && onCellClick && onCellClick(r, c)}
               onDrop={(e) => handleDrop(e, r, c)}
               onDragOver={(e) => handleDragOver(e, r, c)}
               onDragLeave={handleDragLeave}

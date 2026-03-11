@@ -35,3 +35,11 @@
   background-color: #ffcccb; /* Highlight color for hovered cells */
   border: 2px solid #ff0000; /* Optional: Add a border for emphasis */
 }
+
+.placed-piece {
+  cursor: pointer;
+}
+
+.placed-piece:hover {
+  filter: brightness(0.85);
+}

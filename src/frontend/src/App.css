@@ -67,6 +67,19 @@ body {
   box-shadow: 0 4px 16px rgba(44, 62, 80, 0.16);
 }
 
+.button-group {
+  display: flex;
+  gap: 12px;
+}
+
+.clear-button {
+  background: #6c757d;
+}
+
+.clear-button:not(:disabled):hover {
+  background: #495057;
+}
+
 .app-container {
   text-align: center;
 }

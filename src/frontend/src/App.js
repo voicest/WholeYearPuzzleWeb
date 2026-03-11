@@ -155,7 +155,6 @@ function App() {
     );
   };
 
-  // Add this function to App.js
   const handlePieceRestore = (pieceId) => {
     // Remove the piece's placement from the solution
     setSolution((prev) => prev.filter((placement) => placement.pieceId !== pieceId));
@@ -164,6 +163,22 @@ function App() {
       prevPieces.map((piece) =>
         piece.id === pieceId ? { ...piece, used: false } : piece
       )
+    );
+  };
+
+  const handleBoardCellClick = (row, col) => {
+    const placement = solution.find(({ cells }) =>
+      cells.some((cell) => cell.row === row && cell.col === col)
+    );
+    if (placement) {
+      handlePieceRestore(placement.pieceId);
+    }
+  };
+
+  const handleClearBoard = () => {
+    setSolution([]);
+    setPieces((prevPieces) =>
+      prevPieces.map((piece) => ({ ...piece, used: false }))
     );
   };
 
@@ -179,6 +194,7 @@ function App() {
             solution={solution}
             onDrop={handleDropOnBoard}
             draggedPiece={draggedPiece}
+            onCellClick={handleBoardCellClick}
           />
           <div className="workspace-column">
             <div className="date-picker-container">
@@ -201,9 +217,18 @@ function App() {
             />
           </div>
         </div>
-        <button onClick={handleSolve} disabled={loading} className="solve-button">
-          {loading ? 'Solving...' : 'Solve Puzzle'}
-        </button>
+        <div className="button-group">
+          <button onClick={handleSolve} disabled={loading} className="solve-button">
+            {loading ? 'Solving...' : 'Solve Puzzle'}
+          </button>
+          <button
+            onClick={handleClearBoard}
+            disabled={solution.length === 0}
+            className="solve-button clear-button"
+          >
+            Clear Board
+          </button>
+        </div>
       </main>
     </div>
   );
